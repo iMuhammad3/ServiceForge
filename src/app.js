@@ -1,6 +1,7 @@
 
 import express from "express";
 import serviceRoutes from "./routes/serviceRoutes.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/services", serviceRoutes);
+app.use("/api/bookings", bookingRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
