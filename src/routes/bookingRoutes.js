@@ -3,6 +3,10 @@ import { Router } from "express";
 import mongoose from "mongoose";
 import Booking from "../models/Booking.js";
 import Service from "../models/Service.js";
+import {
+  authenticateToken,
+  requireRole,
+} from "../middleware/auth.js";
 
 const router = Router();
 
@@ -14,26 +18,7 @@ const allowedTransitions = {
   cancelled: [],
 };
 
-function requireAdminKey(req, res, next) {
-  const expectedKey = process.env.ADMIN_API_KEY;
-  const providedKey = req.get("x-admin-key");
 
-  if (!expectedKey) {
-    return res.status(503).json({
-      status: "error",
-      message: "Booking management is not configured",
-    });
-  }
-
-  if (!providedKey || providedKey !== expectedKey) {
-    return res.status(401).json({
-      status: "error",
-      message: "Unauthorized",
-    });
-  }
-
-  next();
-}
 
 router.post("/", async (req, res) => {
   try {
@@ -160,7 +145,57 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.patch("/:id/status", requireAdminKey, async (req, res) => {
+router.get(
+  "/",
+  authenticateToken,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const { status } = req.query;
+      const validStatuses = [
+        "pending",
+        "confirmed",
+        "in-progress",
+        "completed",
+        "cancelled",
+      ];
+
+      if (status && !validStatuses.includes(status)) {
+        return res.status(400).json({
+          status: "error",
+          message: "Invalid booking status",
+          validStatuses,
+        });
+      }
+
+      const filter = status ? { status } : {};
+
+      const bookings = await Booking.find(filter)
+        .sort({ createdAt: -1 })
+        .limit(100)
+        .populate("service", "name slug category");
+
+      return res.status(200).json({
+        status: "success",
+        results: bookings.length,
+        data: { bookings },
+      });
+    } catch (error) {
+      console.error("List bookings error:", error.message);
+
+      return res.status(500).json({
+        status: "error",
+        message: "Unable to retrieve bookings",
+      });
+    }
+  }
+);
+
+router.patch(
+    "/:id/status", 
+    authenticateToken, 
+    requireRole("admin"), 
+    async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;

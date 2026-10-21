@@ -8,14 +8,17 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "seed:services": "node src/scripts/seedServices.js"
+    "seed:services": "node src/scripts/seedServices.js",
+    "promote-admin": "node src/scripts/promoteAdmin.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "dotenv": "^18.0.8",
     "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.11.2"
   }
 }
